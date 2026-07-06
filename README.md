@@ -26,3 +26,177 @@ $$
 $$
 	想要得到minJ(w,b)
 4.线性回归的目标就是：**找到一组最优的 w 和 b** ，使得模型的预测值 fw,b(x)尽可能接近真实标签 y。通常通过**最小化损失函数**
+
+ # 二、梯度下降
+ ## 1、梯度下降
+用于寻找最小的代价函数====J(w,b)====的w与b
+（比如从山顶下山，寻找能下的最大的方向，每一步都是比其他方向下去的效率高。）
+ ## 2、梯度下降公式：
+$$
+	w_{t+1}=w_{t}-a*\frac{d}{dw} J(w,b)
+$$
+	a是==学习率==（0-1.00），梯度控制
+	同理：
+$$
+		b_{t+1}=b_{t}-a*\frac{d}{db} J(w,b)
+$$
+	实现效果如图：![[Pasted image 20260702104553.png]]
+![[Pasted image 20260702104359.png]]
+ ## 3、学习率
+![[Pasted image 20260702105848.png|378]]
+根据梯度下降公式来说，即使a是固定值，J(w,b)也会自动下降到局部最小值
+
+ # 三、多特征
+
+ ## 1、多特征公式
+$$
+f_{w,b}(x)=w_{1}x_{1}+w_{1}x_{1}+....w_{n}x_{n}+b
+$$
+	即
+$$
+	f_{w,b}=\mathbf{w}*\mathbf{x}+b
+$$
+	或
+$$
+	f_{w,b}=\sum_{j=1}^{n}w_{j}*x_{j}+b
+$$
+	使用python代码如下：
+```
+	f=np.dot(w,x)+b
+```
+ ## 2、多特征X的梯度下降公式(向量)
+$$
+w_{j}=w_{j}-a*\frac{d}{dw_{j}} J(\mathbf{w_{j}},b)
+$$
+同理
+
+$$
+b_{t+1}=b_{t}-a*\frac{d}{db} J(\mathbf{w},b)
+$$
+
+ ## 3、正规方程方法（非迭代的梯度下降方法）
+目的：是将不同特征（feature）的数值范围统一到相近的尺度上，避免取值范围大的特征会在距离计算或梯度下降中占据主导地位，导致模型偏向该特征，从而提升模型训练的效果和稳定性。
+主要方法：
+（1）标准化（将数据转换为均值为 0、标准差为 1 的分布）
+$$
+x′=\frac{x−μ}{p}​
+$$
+其中u是特征均值，p是特征标准差
+（2）最小-最大缩放（将数据线性缩放到指定范围，通常是 [0, 1]）
+$$
+x'= \frac{x-x_{min}}{x_{max}-x_{min}} ​
+$$
+(3)均值归一化
+$$
+x'= \frac{x-x_{ave}}{x_{max}-x_{min}} ​
+$$
+*分母仍然使用极差（max - min），所以对异常值同样敏感,- 适合需要数据以零为中心、同时限制在固定范围内的场景，比如梯度下降优化*
+ ## 4、检查梯度下降是否收敛
+看学习曲线->J（w,b）是y轴，迭代次数是x轴，当曲线趋向于一个极限值，表明收敛    
+ ## 5、选择学习率
+一般从很小的数值开始，逐次迭代3倍。如0.001->0.003->0.01->....>1.0->....
+ ## 6、特征工程
+**将原始数据转换为更有意义的特征**的过程，目的是让模型能更好地学习数据中的规律。
+方法：多项式回归，比如
+
+$$
+f_{w,b}=w_{1}x_{1}+w_{2}x_{2}^2+w_{3}x_{3}^3+..+b
+$$
+
+# 四、分类
+## 1、逻辑回归
+逻辑回归实际上是一种分类算法。结果分别是0与1；
+逻辑回归由Sigmoid函数原型：
+
+$$
+g(z)=\frac{1}{1+e^-z}
+$$
+其中0<g(z)<1;如图
+![[Pasted image 20260703162755.png]]
+
+结合线性回归模型：
+$$
+f_{\mathbf{w},b}(\mathbf{x})=\mathbf{w}*\mathbf{x}+b
+$$
+组成==逻辑回归模型==：
+$$
+f_{\mathbf{w},b}(\mathbf{x})=g(\mathbf{w}*\mathbf{x}+b)=\frac{1}{1+e^{-(\mathbf{w}*\mathbf{x}+b)}}
+$$
+## 2、决策阈值
+通过逻辑回归模型计算出结果，比如0.45，应将他归为’0‘还是’1‘。应当设计一个阈值，比如0.5，>时就是‘1’，<时就‘0’
+==决策边界：==
+$$
+z=\mathbf{w}*\mathbf{x}+b=0时
+$$
+得到关于x的线方程，比如f(x)=w1x1+w2x2+b,其中w1=1,w2=1,b=-3,要使z=0,则x1+x2=3，如图：
+![[Pasted image 20260703162842.png|440]]
+## 3、逻辑回归的成本模型（损失模型）
+$$
+L(f_{\vec{w},b}(\vec{x}^{(i)}), y^{(i)}) = \begin{cases} -\log(f_{\vec{w},b}(\vec{x}^{(i)})) & \text{if } y^{(i)} = 1 \\ -\log(1 - f_{\vec{w},b}(\vec{x}^{(i)})) & \text{if } y^{(i)} = 0 \end{cases}
+$$
+或者
+$$
+L(f_{\vec{w},b}(\vec{x}^{(i)}), y^{(i)}) = -y^{(i)}\log(f_{\vec{w},b}(\vec{x}^{(i)})) - (1-y^{(i)})\log(1-f_{\vec{w},b}(\vec{x}^{(i)}))
+$$
+因为y^(i)只能取到0或者1
+
+**代表当输入第i个x样本时，距离真实y(对应的第i个)的偏差。**
+则==成本函数==为：
+$$
+J(\vec{w}, b) = \frac{1}{m} \sum_{i=1}^{m} \begin{cases} -\log(f_{\vec{w},b}(\vec{x}^{(i)})) & \text{if } y^{(i)} = 1 \\ -\log(1 - f_{\vec{w},b}(\vec{x}^{(i)})) & \text{if } y^{(i)} = 0 \end{cases}
+$$
+或
+$$
+
+J(\vec{w}, b) = -\frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log(f_{\vec{w},b}(\vec{x}^{(i)})) + (1 - y^{(i)}) \log(1 - f_{\vec{w},b}(\vec{x}^{(i)})) \right]
+$$
+
+## 4、梯度下降
+
+$$
+	w_{j}=w_{j}-a\frac{d}{dw} J(w_{j},b)
+			；；；；b=b-a\frac{d}{db} J(w_{j},b)
+$$
+
+
+其中
+$$
+\begin{aligned} \frac{\partial J(\vec{w}, b)}{\partial w_j} &= \frac{1}{m} \sum_{i=1}^{m} (f_{\vec{w},b}(\vec{x}^{(i)}) - y^{(i)}) x_j^{(i)} \\ \frac{\partial J(\vec{w}, b)}{\partial b} &= \frac{1}{m} \sum_{i=1}^{m} (f_{\vec{w},b}(\vec{x}^{(i)}) - y^{(i)}) \end{aligned}
+$$
+则有
+$$
+\begin{aligned} w_j &= w_j - \alpha \left[ \frac{1}{m} \sum_{i=1}^{m} (f_{\vec{w},b}(\vec{x}^{(i)}) - y^{(i)}) x_j^{(i)} \right] \\ b &= b - \alpha \left[ \frac{1}{m} \sum_{i=1}^{m} (f_{\vec{w},b}(\vec{x}^{(i)}) - y^{(i)}) \right] \end{aligned}
+$$
+## 5、过拟合的解决
+欠拟合--合适--过拟合（多特征的多项式）：
+![[Pasted image 20260703181822.png|531]]
+
+方法（1）：选择合适的特征子集（特征选择），使得某些特征x的参数w等于0-->消除x
+
+方法（2）：正则化
+
+## 6、正则化
+其实现方法是‘惩罚’所有特征w，通过限制权重大小，迫使模型学习更“简单”的模式。
+### 6.1正则化的成本函数
+- 这是 L2 正则化项（也称为权重衰减），用于惩罚过大的权重值，使模型更平滑、泛化能力更强。
+- λ 是正则化强度超参数，值越大，对权重的惩罚越强，模型越简单。
+$$
+J(\vec{w}, b) = \min_{\vec{w},b} \left[ \frac{1}{2m} \sum_{i=1}^{m} (f_{\vec{w},b}(\vec{x}^{(i)}) - y^{(i)})^2 + \frac{\lambda}{2m} \sum_{j=1}^{n} w_j^2 \right]
+$$
+
+### 6.2 正则化线性回归
+$$
+J(\vec{w}, b) = \min_{\vec{w},b} \left[ \underbrace{\frac{1}{2m} \sum_{i=1}^{m} (f_{\vec{w},b}(\vec{x}^{(i)}) - y^{(i)})^2}_{\text{fit data}} + \underbrace{\frac{\lambda}{2m} \sum_{j=1}^{n} w_j^2}_{\text{keep } w_i \text{ small}} \right]
+$$
+
+$$
+J(\vec{w}, b) = \min_{\vec{w},b} \left[ \frac{1}{2m} \sum_{i=1}^{m} (f_{\vec{w},b}(\vec{x}^{(i)}) - y^{(i)})^2 + \frac{\lambda}{2m} \sum_{j=1}^{n} w_j^2 \right]
+$$
+
+### 6.3 正则化逻辑回归
+
+$$
+J(\vec{w}, b) = -\frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log\left(f_{\vec{w},b}(\vec{x}^{(i)})\right) + (1-y^{(i)}) \log\left(1-f_{\vec{w},b}(\vec{x}^{(i)})\right) \right] + \frac{\lambda}{2m} \sum_{j=1}^{n} w_j^2
+$$
+
+
