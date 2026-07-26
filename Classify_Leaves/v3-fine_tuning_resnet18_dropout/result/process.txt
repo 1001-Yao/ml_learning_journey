@@ -1,0 +1,96 @@
+D:\anaconda3\envs\pytorch_gpu_t1\python.exe D:\ml_learning_study\ml_learning_journey\Classify_Leaves\v3-fine_tuning_resnet18_dropout\train_no_K.py
+============================================================
+设备: cuda
+GPU: NVIDIA GeForce RTX 3060 Laptop GPU
+显存: 6.44 GB
+============================================================
+
+加载数据...
+训练集样本数: 14682
+验证集样本数: 3671
+测试集样本数: 8800
+类别数: 176
+
+数据集信息:
+  - 类别数: 176
+  - 训练集批次: 458
+  - 验证集批次: 115
+  - 测试集批次: 275
+
+模型参数:
+  - 可训练参数: 8,484,016
+  - 总参数: 11,266,800
+  - 微调比例: 75.30%
+
+============================================================
+开始训练 (Epochs=20, LR=0.0001, Label Smoothing=0.1)
+============================================================
+
+Epoch   1/20: Loss 4.2688, Train Acc 0.4035, Val Acc 0.3983
+  ✅ 保存最佳模型 (Val Acc: 0.3983)
+Epoch   2/20: Loss 3.0245, Train Acc 0.5701, Val Acc 0.5715
+  ✅ 保存最佳模型 (Val Acc: 0.5715)
+Epoch   3/20: Loss 2.5134, Train Acc 0.6565, Val Acc 0.6647
+  ✅ 保存最佳模型 (Val Acc: 0.6647)
+Epoch   4/20: Loss 2.2485, Train Acc 0.7168, Val Acc 0.7279
+  ✅ 保存最佳模型 (Val Acc: 0.7279)
+Epoch   5/20: Loss 2.0612, Train Acc 0.7656, Val Acc 0.7709
+  ✅ 保存最佳模型 (Val Acc: 0.7709)
+Epoch   6/20: Loss 1.9296, Train Acc 0.8058, Val Acc 0.8088
+  ✅ 保存最佳模型 (Val Acc: 0.8088)
+Epoch   7/20: Loss 1.8236, Train Acc 0.8218, Val Acc 0.8150
+  ✅ 保存最佳模型 (Val Acc: 0.8150)
+Epoch   8/20: Loss 1.7481, Train Acc 0.8418, Val Acc 0.8259
+  ✅ 保存最佳模型 (Val Acc: 0.8259)
+Epoch   9/20: Loss 1.6741, Train Acc 0.8506, Val Acc 0.8379
+  ✅ 保存最佳模型 (Val Acc: 0.8379)
+Epoch  10/20: Loss 1.6150, Train Acc 0.8605, Val Acc 0.8475
+  ✅ 保存最佳模型 (Val Acc: 0.8475)
+Epoch  11/20: Loss 1.5804, Train Acc 0.8748, Val Acc 0.8690
+  ✅ 保存最佳模型 (Val Acc: 0.8690)
+Epoch  12/20: Loss 1.5451, Train Acc 0.8858, Val Acc 0.8665
+Epoch  13/20: Loss 1.5117, Train Acc 0.8908, Val Acc 0.8600
+Epoch  14/20: Loss 1.4834, Train Acc 0.8997, Val Acc 0.8758
+  ✅ 保存最佳模型 (Val Acc: 0.8758)
+Epoch  15/20: Loss 1.4491, Train Acc 0.9071, Val Acc 0.8807
+  ✅ 保存最佳模型 (Val Acc: 0.8807)
+Epoch  16/20: Loss 1.4389, Train Acc 0.9087, Val Acc 0.8766
+Epoch  17/20: Loss 1.4203, Train Acc 0.9121, Val Acc 0.8815
+  ✅ 保存最佳模型 (Val Acc: 0.8815)
+Epoch  18/20: Loss 1.3975, Train Acc 0.9168, Val Acc 0.8910
+  ✅ 保存最佳模型 (Val Acc: 0.8910)
+Epoch  19/20: Loss 1.3897, Train Acc 0.9228, Val Acc 0.8970
+  ✅ 保存最佳模型 (Val Acc: 0.8970)
+Epoch  20/20: Loss 1.3657, Train Acc 0.9236, Val Acc 0.8973
+  ✅ 保存最佳模型 (Val Acc: 0.8973)
+
+✅ 训练完成！最佳验证准确率: 0.8973
+   模型已保存到: D:\ml_learning_study\ml_learning_journey\Classify_Leaves\data\best_model.pth
+训练曲线已保存到: D:\ml_learning_study\ml_learning_journey\Classify_Leaves\data\training_history.png
+
+正在对测试集进行预测...
+
+✅ 预测结果已保存到: D:\ml_learning_study\ml_learning_journey\Classify_Leaves\data\test_predictions.csv
+   共 8800 个样本
+
+前10个预测结果:
+                   image                         label
+0  images_test/18353.jpg               asimina_triloba
+1  images_test/18354.jpg         platanus_occidentalis
+2  images_test/18355.jpg           platanus_acerifolia
+3  images_test/18356.jpg                pinus_bungeana
+4  images_test/18357.jpg           platanus_acerifolia
+5  images_test/18358.jpg       koelreuteria_paniculata
+6  images_test/18359.jpg             magnolia_stellata
+7  images_test/18360.jpg  metasequoia_glyptostroboides
+8  images_test/18361.jpg                 tilia_cordata
+9  images_test/18362.jpg               ulmus_americana
+
+============================================================
+🎉 全部流程完成！
+最佳验证准确率: 0.8973
+模型保存位置: D:\ml_learning_study\ml_learning_journey\Classify_Leaves\data\best_model.pth
+预测结果保存位置: D:\ml_learning_study\ml_learning_journey\Classify_Leaves\data\test_predictions.csv
+============================================================
+
+进程已结束，退出代码为 0
