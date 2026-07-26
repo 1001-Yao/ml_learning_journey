@@ -1,673 +1,153 @@
-"""
-train.py
-Part 1
-----------------------------------------
-Leaf Classification Training
-"""
-
 import os
-import numpy as np
 import torch
 import torch.nn as nn
-from torch.cuda.amp import autocast, GradScaler
-from sklearn.model_selection import KFold
-
-from dataset import LeafDataset, DATA_DIR, train_transform
-from model import get_model
-from utils import (
-    seed_everything,
-    AverageMeter,
-    accuracy,
-    evaluate,
-    EarlyStopping,
-    save_checkpoint,
-    plot_curves,
-    get_lr,
-    Timer,
-    get_device,
-    print_model_info
-)
-
-import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+import torch.optim as optim
 from torch.utils.data import DataLoader, Subset
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import KFold
+from torchvision import models, transforms
+import matplotlib.pyplot as plt
 
-# ==========================================
-# Config
-# ==========================================
+# ========== 路径设置 ==========
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
 
-SEED = 42
+# ========== 数据增强 ==========
+train_transform = transforms.Compose([
+    transforms.Resize(256),
+    transforms.RandomResizedCrop(224),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
 
-NUM_EPOCHS = 30
 
-K_FOLDS = 5
+# ========== 模型定义 ==========
+def get_model(num_classes, device):
+    # 使用 weights 参数代替 deprecated 的 pretrained
+    # 加载预训练权重（核心步骤）
+    model = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
 
-BATCH_SIZE = 64
-
-LEARNING_RATE = 3e-4
-
-WEIGHT_DECAY = 1e-4
-
-PATIENCE = 5
-
-CHECKPOINT_DIR = "checkpoints"
-
-DEVICE = get_device()
-
-USE_AMP = torch.cuda.is_available()
-
-# ==========================================
-# Seed
-# ==========================================
-
-seed_everything(SEED)
-
-# ==========================================
-# Train One Epoch
-# ==========================================
-
-def train_one_epoch(
-        model,
-        train_loader,
-        criterion,
-        optimizer,
-        scheduler,
-        scaler,
-        device):
-
-    model.train()
-
-    loss_meter = AverageMeter()
-
-    acc_meter = AverageMeter()
-
-    for images, labels in train_loader:
-
-        images = images.to(device, non_blocking=True)
-        labels = labels.to(device, non_blocking=True)
-
-        optimizer.zero_grad()
-
-        if USE_AMP:
-
-            with autocast():
-
-                outputs = model(images)
-
-                loss = criterion(outputs, labels)
-
-            scaler.scale(loss).backward()
-
-            scaler.step(optimizer)
-
-            scaler.update()
-
+    # 解冻最后两层进行微调,其他层的反向传播设置为false,即权重不会更新（冻结），即保留了ImageNet上学到的通用特征
+    for name, param in model.named_parameters():
+        if "layer4" in name or "fc" in name:
+            param.requires_grad = True
         else:
+            param.requires_grad = False
 
-            outputs = model(images)
+    model.fc = nn.Linear(model.fc.in_features, num_classes)
+    return model.to(device)
 
-            loss = criterion(outputs, labels)
 
+# ========== 训练函数 ==========
+def train_model(model, train_loader, val_loader, epochs=10, lr=1e-4, device=None):
+    if device is None:
+        device = next(model.parameters()).device
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
+
+    train_accs, val_accs = [], []
+
+    for epoch in range(epochs):
+        model.train()
+        for X, y in train_loader:
+            X, y = X.to(device), y.to(device)
+            optimizer.zero_grad()
+            outputs = model(X)
+            loss = criterion(outputs, y)
             loss.backward()
-
             optimizer.step()
 
-        acc = accuracy(outputs, labels)
+        train_acc = evaluate_accuracy(model, train_loader, device)
+        val_acc = evaluate_accuracy(model, val_loader, device)
+        train_accs.append(train_acc)
+        val_accs.append(val_acc)
 
-        loss_meter.update(
-            loss.item(),
-            labels.size(0)
-        )
+        print(f'Epoch {epoch + 1}/{epochs}: Train Acc {train_acc:.4f}, Val Acc {val_acc:.4f}')
 
-        acc_meter.update(
-            acc,
-            labels.size(0)
-        )
-
-    scheduler.step()
-
-    return (
-        loss_meter.avg,
-        acc_meter.avg
-    )
-
-# ==========================================
-# Create Optimizer
-# ==========================================
-
-def create_optimizer(model):
-
-    optimizer = torch.optim.AdamW(
-
-        model.parameters(),
-
-        lr=LEARNING_RATE,
-
-        weight_decay=WEIGHT_DECAY
-
-    )
-
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-
-        optimizer,
-
-        T_max=NUM_EPOCHS,
-
-        eta_min=1e-6
-
-    )
-
-    return optimizer, scheduler
+    return train_accs, val_accs
 
 
-# ==========================================
-# Create Loss
-# ==========================================
-
-def create_loss():
-
-    return nn.CrossEntropyLoss(
-
-        label_smoothing=0.1
-
-    )
-
-
-# ==========================================
-# Create AMP
-# ==========================================
-
-def create_scaler():
-
-    return GradScaler(enabled=USE_AMP)
-
-# ==========================================
-# Prepare Dataset
-# ==========================================
-
-def prepare_dataset():
-
-    train_csv = os.path.join(DATA_DIR, "train.csv")
-
-    train_df = pd.read_csv(train_csv, header=None)
-
-    train_df.columns = ["image", "label"]
-
-    label_encoder = LabelEncoder()
-
-    train_df["label"] = label_encoder.fit_transform(
-        train_df["label"]
-    )
-
-    encoded_csv = os.path.join(
-        DATA_DIR,
-        "train_encoded.csv"
-    )
-
-    train_df.to_csv(
-        encoded_csv,
-        index=False
-    )
-
-    num_classes = len(label_encoder.classes_)
-
-    dataset = LeafDataset(
-
-        csv_file=encoded_csv,
-
-        img_root=DATA_DIR,
-
-        transform=train_transform,
-
-        is_train=True
-
-    )
-
-    return dataset, num_classes
-
-
-# ==========================================
-# Validate
-# ==========================================
-
-@torch.no_grad()
-
-def validate(
-
-        model,
-
-        val_loader,
-
-        criterion,
-
-        device):
-
+# ========== 评估函数 ==========
+def evaluate_accuracy(model, data_iter, device):
     model.eval()
+    correct, total = 0, 0
+    with torch.no_grad():
+        for X, y in data_iter:
+            X, y = X.to(device), y.to(device)
+            outputs = model(X)
+            _, predicted = torch.max(outputs.data, 1)
+            total += y.size(0)
+            correct += (predicted == y).sum().item()
+    return correct / total
 
-    loss_meter = AverageMeter()
 
-    acc_meter = AverageMeter()
+# ========== K折验证 ==========
+def k_fold_cross_validation(k, dataset, epochs=10, lr=1e-4):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    kf = KFold(n_splits=k, shuffle=True, random_state=42)
+    train_acc_sum, val_acc_sum = 0, 0
 
-    for images, labels in val_loader:
+    for fold, (train_idx, val_idx) in enumerate(kf.split(range(len(dataset)))):
+        print(f'\n===== Fold {fold + 1}/{k} =====')
 
-        images = images.to(device, non_blocking=True)
+        train_set = Subset(dataset, train_idx)
+        val_set = Subset(dataset, val_idx)
 
-        labels = labels.to(device, non_blocking=True)
+        train_loader = DataLoader(train_set, batch_size=32, shuffle=True, num_workers=0)
+        val_loader = DataLoader(val_set, batch_size=32, shuffle=False, num_workers=0)
 
-        outputs = model(images)
+        model = get_model(num_classes, device)
+        train_accs, val_accs = train_model(model, train_loader, val_loader, epochs, lr, device)
 
-        loss = criterion(outputs, labels)
+        train_acc_sum += train_accs[-1]
+        val_acc_sum += val_accs[-1]
 
-        acc = accuracy(outputs, labels)
+        print(f'Fold {fold + 1} Final: Train Acc {train_accs[-1]:.4f}, Val Acc {val_accs[-1]:.4f}')
 
-        loss_meter.update(
+        if fold == 0:
+            plt.plot(range(1, epochs + 1), train_accs, label='train')
+            plt.plot(range(1, epochs + 1), val_accs, label='valid')
+            plt.xlabel('epoch')
+            plt.ylabel('accuracy')
+            plt.legend()
+            plt.ylim([0, 1])
+            plt.show()
 
-            loss.item(),
+    return train_acc_sum / k, val_acc_sum / k
 
-            labels.size(0)
 
-        )
+# ========== 主程序 ==========
+if __name__ == '__main__':
+    # 数据准备
+    train_csv = os.path.join(DATA_DIR, 'train.csv')
+    df = pd.read_csv(train_csv, header=None, names=['image', 'label'])
 
-        acc_meter.update(
+    le = LabelEncoder()
+    df['label'] = le.fit_transform(df['label'])
+    num_classes = len(le.classes_)
 
-            acc,
+    encoded_csv = os.path.join(DATA_DIR, 'train_encoded.csv')
+    df.to_csv(encoded_csv, index=False)
 
-            labels.size(0)
+    # 创建数据集
+    from dataset import LeafDataset
 
-        )
+    full_dataset = LeafDataset(encoded_csv, DATA_DIR, transform=train_transform, is_train=True)
 
-    return loss_meter.avg, acc_meter.avg
+    # 参数设置
+    k, epochs, lr = 5, 20, 1e-4  # 学习率设为1e-4
 
+    print(f"Total samples: {len(full_dataset)}, Classes: {num_classes}")
+    print(f"Params: K={k}, Epochs={epochs}, LR={lr}")
 
-# ==========================================
-# K Fold Training
-# ==========================================
+    # 开始训练
+    avg_train_acc, avg_val_acc = k_fold_cross_validation(k, full_dataset, epochs, lr)
 
-def k_fold_train(dataset, num_classes):
-
-    kfold = KFold(
-
-        n_splits=K_FOLDS,
-
-        shuffle=True,
-
-        random_state=SEED
-
-    )
-
-    fold_results = []
-
-    all_train_loss = []
-
-    all_val_loss = []
-
-    all_train_acc = []
-
-    all_val_acc = []
-
-    timer = Timer()
-
-    for fold, (train_idx, val_idx) in enumerate(
-
-            kfold.split(dataset), 1):
-
-        print()
-
-        print("=" * 60)
-
-        print(f"Fold {fold}/{K_FOLDS}")
-
-        print("=" * 60)
-
-        train_dataset = Subset(
-
-            dataset,
-
-            train_idx
-
-        )
-
-        val_dataset = Subset(
-
-            dataset,
-
-            val_idx
-
-        )
-
-        train_loader = DataLoader(
-
-            train_dataset,
-
-            batch_size=BATCH_SIZE,
-
-            shuffle=True,
-
-            num_workers=2,
-
-            pin_memory=torch.cuda.is_available(),
-
-            persistent_workers=True
-
-        )
-
-        val_loader = DataLoader(
-
-            val_dataset,
-
-            batch_size=BATCH_SIZE,
-
-            shuffle=False,
-
-            num_workers=2,
-
-            pin_memory=torch.cuda.is_available(),
-
-            persistent_workers=True
-
-        )
-
-        model = get_model(num_classes)
-
-        model.to(DEVICE)
-
-        print_model_info(model)
-
-        criterion = create_loss()
-
-        optimizer, scheduler = create_optimizer(model)
-
-        scaler = create_scaler()
-
-        stopper = EarlyStopping(
-
-            patience=PATIENCE
-
-        )
-
-        train_loss_history = []
-
-        val_loss_history = []
-
-        train_acc_history = []
-
-        val_acc_history = []
-
-        best_acc = 0.0
-
-        for epoch in range(NUM_EPOCHS):
-
-            train_loss, train_acc = train_one_epoch(
-
-                model,
-
-                train_loader,
-
-                criterion,
-
-                optimizer,
-
-                scheduler,
-
-                scaler,
-
-                DEVICE
-
-            )
-
-            val_loss, val_acc = validate(
-
-                model,
-
-                val_loader,
-
-                criterion,
-
-                DEVICE
-
-            )
-
-            train_loss_history.append(train_loss)
-
-            val_loss_history.append(val_loss)
-
-            train_acc_history.append(train_acc)
-
-            val_acc_history.append(val_acc)
-
-            lr = get_lr(optimizer)
-
-            print(
-
-                f"Epoch [{epoch+1:02d}/{NUM_EPOCHS}] "
-
-                f"LR={lr:.6f} "
-
-                f"Train Loss={train_loss:.4f} "
-
-                f"Train Acc={train_acc:.4f} "
-
-                f"Val Loss={val_loss:.4f} "
-
-                f"Val Acc={val_acc:.4f}"
-
-            )
-
-            if val_acc > best_acc:
-
-                best_acc = val_acc
-
-                save_checkpoint(
-
-                    model,
-
-                    optimizer,
-
-                    epoch,
-
-                    best_acc,
-
-                    os.path.join(
-
-                        CHECKPOINT_DIR,
-
-                        f"fold{fold}_best.pth"
-
-                    )
-
-                )
-
-            if stopper(val_acc):
-
-                print("Early Stopping")
-
-                break
-
-        fold_results.append(best_acc)
-
-        all_train_loss.append(train_loss_history)
-
-        all_val_loss.append(val_loss_history)
-
-        all_train_acc.append(train_acc_history)
-
-        all_val_acc.append(val_acc_history)
-
-        print(
-
-            f"Best Validation Accuracy: "
-
-            f"{best_acc:.4f}"
-
-        )
-
-    print()
-
-    print("=" * 60)
-
-    print("K-Fold Finished")
-
-    print("=" * 60)
-
-    print(
-
-        f"Average Accuracy : "
-
-        f"{np.mean(fold_results):.4f}"
-
-    )
-
-    print(
-
-        f"Std Accuracy : "
-
-        f"{np.std(fold_results):.4f}"
-
-    )
-
-    print(
-
-        f"Training Time : "
-
-        f"{timer.elapsed()/60:.2f} min"
-
-    )
-
-    return (
-
-        all_train_loss,
-
-        all_val_loss,
-
-        all_train_acc,
-
-        all_val_acc
-
-    )
-# ==========================================
-# Main
-# ==========================================
-
-def main():
-
-    print("=" * 70)
-    print("Leaf Classification Training")
-    print("=" * 70)
-
-    print(f"Device        : {DEVICE}")
-    print(f"Epochs        : {NUM_EPOCHS}")
-    print(f"K Fold        : {K_FOLDS}")
-    print(f"Batch Size    : {BATCH_SIZE}")
-    print(f"Learning Rate : {LEARNING_RATE}")
-    print(f"Weight Decay  : {WEIGHT_DECAY}")
-    print(f"AMP           : {USE_AMP}")
-    print("=" * 70)
-
-    dataset, num_classes = prepare_dataset()
-
-    (
-        all_train_loss,
-        all_val_loss,
-        all_train_acc,
-        all_val_acc
-
-    ) = k_fold_train(
-
-        dataset,
-
-        num_classes
-
-    )
-
-    # ======================================
-    # Average Curves
-    # ======================================
-
-    min_epoch = min(
-
-        len(x)
-
-        for x in all_train_loss
-
-    )
-
-    avg_train_loss = np.mean(
-
-        [x[:min_epoch] for x in all_train_loss],
-
-        axis=0
-
-    )
-
-    avg_val_loss = np.mean(
-
-        [x[:min_epoch] for x in all_val_loss],
-
-        axis=0
-
-    )
-
-    avg_train_acc = np.mean(
-
-        [x[:min_epoch] for x in all_train_acc],
-
-        axis=0
-
-    )
-
-    avg_val_acc = np.mean(
-
-        [x[:min_epoch] for x in all_val_acc],
-
-        axis=0
-
-    )
-
-    plot_curves(
-
-        avg_train_loss,
-
-        avg_val_loss,
-
-        avg_train_acc,
-
-        avg_val_acc,
-
-        CHECKPOINT_DIR
-
-    )
-
-    print()
-
-    print("=" * 70)
-
-    print("Training Finished Successfully!")
-
-    print("=" * 70)
-
-    print(
-
-        f"Training Curves Saved To : "
-
-        f"{CHECKPOINT_DIR}/training_curves.png"
-
-    )
-
-    print(
-
-        f"Best Models Saved To : "
-
-        f"{CHECKPOINT_DIR}"
-
-    )
-
-    print("=" * 70)
-
-
-# ==========================================
-# Program Entry
-# ==========================================
-
-if __name__ == "__main__":
-
-    main()
+    print(f'\n=== Final Result ===')
+    print(f'Average Train Acc: {avg_train_acc:.4f}')
+    print(f'Average Val Acc:   {avg_val_acc:.4f}')

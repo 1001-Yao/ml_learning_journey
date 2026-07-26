@@ -1,0 +1,72 @@
+D:\anaconda3\envs\pytorch_gpu_t1\python.exe D:\ml_learning_study\ml_learning_journey\Classify_Leaves\v2\train.py
+Total samples: 18353, Classes: 176
+Params: K=5, Epochs=20, LR=0.0001
+
+===== Fold 1/5 =====
+Epoch 1/20: Train Acc 0.5084, Val Acc 0.4691
+Epoch 2/20: Train Acc 0.6424, Val Acc 0.6037
+Epoch 3/20: Train Acc 0.7183, Val Acc 0.6739
+Epoch 4/20: Train Acc 0.7677, Val Acc 0.7186
+Epoch 5/20: Train Acc 0.7972, Val Acc 0.7442
+Epoch 6/20: Train Acc 0.8164, Val Acc 0.7753
+Epoch 7/20: Train Acc 0.8247, Val Acc 0.7698
+Epoch 8/20: Train Acc 0.8341, Val Acc 0.7791
+Epoch 9/20: Train Acc 0.8430, Val Acc 0.7998
+Epoch 10/20: Train Acc 0.8583, Val Acc 0.8020
+Epoch 11/20: Train Acc 0.8655, Val Acc 0.8145
+Epoch 12/20: Train Acc 0.8649, Val Acc 0.8139
+Epoch 13/20: Train Acc 0.8716, Val Acc 0.8126
+Epoch 14/20: Train Acc 0.8756, Val Acc 0.8216
+Epoch 15/20: Train Acc 0.8787, Val Acc 0.8199
+Epoch 16/20: Train Acc 0.8758, Val Acc 0.8246
+Epoch 17/20: Train Acc 0.8868, Val Acc 0.8251
+Epoch 18/20: Train Acc 0.8867, Val Acc 0.8344
+Epoch 19/20: Train Acc 0.8914, Val Acc 0.8420
+Epoch 20/20: Train Acc 0.8899, Val Acc 0.8330
+Fold 1 Final: Train Acc 0.8899, Val Acc 0.8330
+
+===== Fold 2/5 =====
+Epoch 1/20: Train Acc 0.4998, Val Acc 0.4642
+Epoch 2/20: Train Acc 0.6395, Val Acc 0.6129
+Epoch 3/20: Train Acc 0.7252, Val Acc 0.6813
+Epoch 4/20: Train Acc 0.7703, Val Acc 0.7241
+Epoch 5/20: Train Acc 0.7949, Val Acc 0.7589
+Epoch 6/20: Train Acc 0.8085, Val Acc 0.7551
+Epoch 7/20: Train Acc 0.8300, Val Acc 0.7804
+Epoch 8/20: Train Acc 0.8406, Val Acc 0.7992
+Epoch 9/20: Train Acc 0.8459, Val Acc 0.7998
+Epoch 10/20: Train Acc 0.8533, Val Acc 0.8069
+Epoch 11/20: Train Acc 0.8577, Val Acc 0.8156
+Epoch 12/20: Train Acc 0.8659, Val Acc 0.8093
+Epoch 13/20: Train Acc 0.8749, Val Acc 0.8254
+Epoch 14/20: Train Acc 0.8775, Val Acc 0.8306
+Epoch 15/20: Train Acc 0.8800, Val Acc 0.8327
+Epoch 16/20: Train Acc 0.8808, Val Acc 0.8338
+Epoch 17/20: Train Acc 0.8854, Val Acc 0.8341
+Epoch 18/20: Train Acc 0.8878, Val Acc 0.8314
+Epoch 19/20: Train Acc 0.8922, Val Acc 0.8524
+Epoch 20/20: Train Acc 0.8948, Val Acc 0.8382
+Fold 2 Final: Train Acc 0.8948, Val Acc 0.8382
+
+===== Fold 3/5 =====
+Epoch 1/20: Train Acc 0.4931, Val Acc 0.4522
+Epoch 2/20: Train Acc 0.6485, Val Acc 0.5971
+Epoch 3/20: Train Acc 0.7290, Val Acc 0.6870
+Epoch 4/20: Train Acc 0.7615, Val Acc 0.7088
+Epoch 5/20: Train Acc 0.7944, Val Acc 0.7363
+Epoch 6/20: Train Acc 0.8201, Val Acc 0.7589
+Epoch 7/20: Train Acc 0.8324, Val Acc 0.7785
+Epoch 8/20: Train Acc 0.8463, Val Acc 0.7927
+Epoch 9/20: Train Acc 0.8495, Val Acc 0.7913
+Epoch 10/20: Train Acc 0.8613, Val Acc 0.7990
+Epoch 11/20: Train Acc 0.8579, Val Acc 0.8039
+Epoch 12/20: Train Acc 0.8687, Val Acc 0.7992
+Epoch 13/20: Train Acc 0.8735, Val Acc 0.8178
+Epoch 14/20: Train Acc 0.8773, Val Acc 0.8240
+Epoch 15/20: Train Acc 0.8805, Val Acc 0.8194
+Epoch 16/20: Train Acc 0.8840, Val Acc 0.8202
+Epoch 17/20: Train Acc 0.8901, Val Acc 0.8202
+Epoch 18/20: Train Acc 0.8868, Val Acc 0.8295
+Epoch 19/20: Train Acc 0.8899, Val Acc 0.8278
+Epoch 20/20: Train Acc 0.8895, Val Acc 0.8287
+Fold 3 Final: Train Acc 0.8895, Val Acc 0.8287
