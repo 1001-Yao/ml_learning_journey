@@ -2,6 +2,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 import pandas as pd
 import numpy as np
@@ -61,9 +62,13 @@ def train_model(model, train_loader, val_loader, epochs=20, lr=1e-4,
 
     criterion = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
     optimizer = optim.Adam(
-        filter(lambda p: p.requires_grad, model.parameters()),
-        lr=lr
+        filter(lambda p: p.requires_grad,
+               model.parameters()),
+                lr=lr,
+                weight_decay=5e-4  # 权重衰减
     )
+    # 学习率调节器：调整学习率的 ########################################
+    scheduler =ReduceLROnPlateau(optimizer, mode='min', factor=0)
 
     train_accs, val_accs = [], []
     best_val_acc = 0
@@ -90,6 +95,7 @@ def train_model(model, train_loader, val_loader, epochs=20, lr=1e-4,
         train_accs.append(train_acc)
         val_accs.append(val_acc)
 
+
         avg_loss = train_loss / len(train_loader)
         print(f'Epoch {epoch + 1:3d}/{epochs}: Loss {avg_loss:.4f}, '
               f'Train Acc {train_acc:.4f}, Val Acc {val_acc:.4f}')
@@ -99,6 +105,8 @@ def train_model(model, train_loader, val_loader, epochs=20, lr=1e-4,
             best_model_state = model.state_dict().copy()
             torch.save(best_model_state, save_path)
             print(f'  ✅ 保存最佳模型 (Val Acc: {best_val_acc:.4f})')
+
+        scheduler.step(val_acc) # 在这根据验证指标自动调整，最常用 #####################################
 
     if best_model_state is not None:
         model.load_state_dict(best_model_state)
