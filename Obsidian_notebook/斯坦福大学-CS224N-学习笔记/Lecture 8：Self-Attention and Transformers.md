@@ -6,11 +6,11 @@ GPU的并行计算能力被RNN的串行结构浪费：
 
 2、Why attention?
 不依赖索引序列，同时可以并行计算
-![[Pasted image 20260811105825.png]]
+![pasted-image-20260811105825](images/pasted-image-20260811105825.png)
 
 3、attention 工作机制
     在注意力机制中，Query 与所有 Key 逐一计算相似度分数，形成对“键空间”的软匹配（而非硬性索引）。该分数经 Softmax 归一化为权重分布后，用于对对应的 Value（词向量） 进行加权求和，得到最终的上下文向量输出。
-![[Pasted image 20260811110425.png]]
+![pasted-image-20260811110425](images/pasted-image-20260811110425.png)
 
 
 **4、注意力机制公式**
@@ -50,7 +50,7 @@ $$
 对于每个位置 \( i \)，得到它与其他所有位置之间的“注意力权重分布”。
 
 最后做加权平均输出结果
-![[Pasted image 20260811111843.png]]
+![pasted-image-20260811111843](images/pasted-image-20260811111843.png)
 
 
 5、自注意力机制作为基础模块的障碍与解决方法
@@ -69,7 +69,7 @@ $$
 
 3）通过将未来位置的注意力权重人为设为 0，实现掩码（Mask）。
 在计算Softmax之前，把**未来位置**的Attention分数**强行设为负无穷**（`-inf`）。负无穷经过Softmax后变成**绝对的0**。强迫模型只能根据前面的词进行预测。
-![[Pasted image 20260811120002.png]]
+![pasted-image-20260811120002](images/pasted-image-20260811120002.png)
 
 6、Self-Attention模块
 
@@ -88,15 +88,15 @@ $$
         ↓
 概率（Probabilities）
 但这个架构在现实中使用率极低。
-![[Pasted image 20260811120307.png]]
+![pasted-image-20260811120307](images/pasted-image-20260811120307.png)
 
 7、Transformer Decoder
 
 7.1、Tansformer Decoder 总览
-![[Pasted image 20260811152144.png]]
+![pasted-image-20260811152144](images/pasted-image-20260811152144.png)
 7.2、Multi-Head Attention
 多头注意力机制，可以简单理解为先用一组QKV来跑一次，再换另外一组QKV跑
-![[Pasted image 20260811144127.png]]
+![pasted-image-20260811144127](images/pasted-image-20260811144127.png)
 单头注意力机制局限性：
 	1）对于每一个词，sa只能算出一个注意力分布，只能聚焦在一个模式上
 	2）但一个词可能有多种关注需求
@@ -113,40 +113,40 @@ $$
 	(3)拼接所有头输出。按最后一维拼接：n×(h×d/h)=n×d。Y是一个可学习的线性变换矩阵，形状为 (d, d)。乘以 Y 是一个线性变换，让模型能够学习如何融合多头之间的信息，把各头独立捕获到的信息整合成一个统一的输出。
 	
 图示：
-![[Pasted image 20260811150745.png]]
+![pasted-image-20260811150745](images/pasted-image-20260811150745.png)
 
 
 
 7.3、Sequcence-Stacked from Attention
 将词从单独向量堆叠为大矩阵来处理 ，从而得到整个大矩阵的注意力分数
-![[Pasted image 20260811143936.png]]
+![pasted-image-20260811143936](images/pasted-image-20260811143936.png)
 
 
 7.4、缩放点积注意力
-![[Pasted image 20260811151204.png]]
-![[Pasted image 20260811151221.png]]
+![pasted-image-20260811151204](images/pasted-image-20260811151204.png)
+![pasted-image-20260811151221](images/pasted-image-20260811151221.png)
 
 7.5、残差连接和层归一化
-![[Pasted image 20260811152059.png]]
+![pasted-image-20260811152059](images/pasted-image-20260811152059.png)
 
 残差连接：
-![[Pasted image 20260811152423.png]]
+![pasted-image-20260811152423](images/pasted-image-20260811152423.png)
 
 层归一化：
 归一化的是,每一个独立词向量内部的“各个维度”
-![[Pasted image 20260811151804.png|599]]
+![pasted-image-20260811151804](images/pasted-image-20260811151804.png)
 
 8、Transfomer Enconder
 与Transformer deconder的区别就是在多头注意力机制 ==没有==**掩码mask**
-![[Pasted image 20260811153127.png]]
+![pasted-image-20260811153127](images/pasted-image-20260811153127.png)
 
 9、Transformer Encoder-Decoder
 
-![[Pasted image 20260811153348.png]]
+![pasted-image-20260811153348](images/pasted-image-20260811153348.png)
 多个输入：
 	Decoder Inputs 给模型“回忆”自己翻译到了哪里；来自 Encoder 的输入给模型“指引”该怎么翻译原文。两者缺一不可，共同配合完成准确的机器翻译
 
 交叉注意力：
 	**把解码器向量作为查询，再把编码器的输出作 键和值**，所以解码器的每一个值都会关注 编码器所有块输出中的全部词汇
 
-![[Pasted image 20260811154201.png]]
+![pasted-image-20260811154201](images/pasted-image-20260811154201.png)

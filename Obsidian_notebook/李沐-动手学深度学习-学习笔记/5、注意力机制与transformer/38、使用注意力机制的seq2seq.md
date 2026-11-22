@@ -1,7 +1,7 @@
 1、
-![[Pasted image 20260811171951.png]]
+![pasted-image-20260811171951](images/pasted-image-20260811171951.png)
 2、
-![[Pasted image 20260811172008.png]]
+![pasted-image-20260811172008](images/pasted-image-20260811172008.png)
 3、
-![[Pasted image 20260811172028.png]]
+![pasted-image-20260811172028](images/pasted-image-20260811172028.png)
 

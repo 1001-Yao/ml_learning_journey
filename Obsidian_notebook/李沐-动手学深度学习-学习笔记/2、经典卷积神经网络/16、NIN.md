@@ -1,14 +1,14 @@
 1、
-![[Pasted image 20260717150235.png|429]]
+![pasted-image-20260717150235](images/pasted-image-20260717150235.png)
 2、
-![[Pasted image 20260717150329.png|517]]
+![pasted-image-20260717150329](images/pasted-image-20260717150329.png)
 3、
-![[Pasted image 20260717150634.png]]
+![pasted-image-20260717150634](images/pasted-image-20260717150634.png)
 4、
-![[Pasted image 20260717150821.png]]
+![pasted-image-20260717150821](images/pasted-image-20260717150821.png)
 5、
-![[Pasted image 20260717150857.png]]
+![pasted-image-20260717150857](images/pasted-image-20260717150857.png)
 6、
-![[Pasted image 20260717151000.png|569]]
+![pasted-image-20260717151000](images/pasted-image-20260717151000.png)
 7、
-![[Pasted image 20260717151118.png]]
+![pasted-image-20260717151118](images/pasted-image-20260717151118.png)

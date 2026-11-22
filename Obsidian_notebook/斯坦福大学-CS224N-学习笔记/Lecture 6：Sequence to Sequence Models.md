@@ -1,8 +1,8 @@
-![[Pasted image 20260809135714.png]]
+![pasted-image-20260809135714](images/pasted-image-20260809135714.png)
 
 1、评估语言模型指标-困惑度
 越低越好
-![[Pasted image 20260809140500.png]]
+![pasted-image-20260809140500](images/pasted-image-20260809140500.png)
 
 2、LSTM
 隐藏状态分为：隐藏状态和细胞状态
@@ -13,12 +13,12 @@
 输入门：决定对于下一个输入要关注多少，然后把它放进隐藏状态
 输出门：控制细胞（主记忆）有多少内容会被传出去
 
-![[Pasted image 20260809142827.png]]
+![pasted-image-20260809142827](images/pasted-image-20260809142827.png)
  细胞是长短期记忆，隐藏状态则包含用于生成的相关信息
  门控与细胞都是长度为n的向量
 
 计算：
-![[Pasted image 20260809143149.png]]
+![pasted-image-20260809143149](images/pasted-image-20260809143149.png)
 
 
 3、Seq2Seq

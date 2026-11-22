@@ -1,9 +1,9 @@
-![[Pasted image 20260809110703.png]]
+![pasted-image-20260809110703](images/pasted-image-20260809110703.png)
 
 1、依存结构
  它关心 中心词 或核心词，以及哪些词作为它的修饰语或论元
  比如：
-![[Pasted image 20260809111323.png]]
+![pasted-image-20260809111323](images/pasted-image-20260809111323.png)
 
  
 2、依存语法
@@ -15,10 +15,10 @@
 整个句子的核心是谓语动词（通常是主要动词）
 根节点指向核心
 
-![[Pasted image 20260809112625.png]]
+![pasted-image-20260809112625](images/pasted-image-20260809112625.png)
 
 3、特征工程
-![[Pasted image 20260809115806.png]]
+![pasted-image-20260809115806](images/pasted-image-20260809115806.png)
 依存句法分析的传统特征工程，基于词汇亲和力、距离衰减、障碍干预和配价约束这四类偏好，系统性地建模了句法树中“中心词-依存词”之间在词汇、线性位置和结构容量上的合法配置。（判断两个词有没有“父子关系”，要看它们是不是固定搭配（Bilexical）、隔得近不近（Distance）、中间有没有拦路虎（Intervening）、当爹的到底有没有编制名额再收一个儿子（Valency）。）
 
 4、依存解析器的实现方法
@@ -28,17 +28,17 @@
  缓冲区在左，栈在右
   
 for example:
-![[Pasted image 20260809120503.png]]
+![pasted-image-20260809120503](images/pasted-image-20260809120503.png)
 
-![[Pasted image 20260809120554.png]]
+![pasted-image-20260809120554](images/pasted-image-20260809120554.png)
 
 终止：缓冲区为空，栈剩下root
 左右弧的选择：核心依据是 “中心词（Head）”到底在左边还是右边
 （就是根据“词、距、障、价”来判断：当前这组“栈顶双词”，中心词到底在左边（LEFT）还是在右边（RIGHT））
 
 2、图
-![[Pasted image 20260809121355.png]]
-![[Pasted image 20260809121419.png]]
+![pasted-image-20260809121355](images/pasted-image-20260809121355.png)
+![pasted-image-20260809121419](images/pasted-image-20260809121419.png)
 
 
 5、深度学习网络来构建依存解析器
