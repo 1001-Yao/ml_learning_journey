@@ -34,6 +34,34 @@ GitHub 和 PyCharm 的 Markdown 渲染器都不认识 `![[...]]`，只会把方�
 
 ```bash
 python tools/sync_obsidian_images.py --vault "C:/Users/姚国庆/Documents/Obsidian Vault"
+python tools/normalize_markdown_math.py --notes Obsidian_notebook
 ```
 
 先看效果可以加 `--dry-run` 只统计不改文件。
+
+#### 关于公式
+
+Obsidian 渲染公式比 GitHub 宽容，所以有些公式在 Obsidian 里正常、到 GitHub 就不显示。
+两条硬性规则（都用 GitHub 官方渲染接口实测过）：
+
+1. **`$$` 必须独占一行，且前后各有一个空行**
+   ```markdown
+   上一段文字
+
+   $$
+   J(w,b) = \frac{1}{2m}\sum_{i=1}^{m}(f(x)-y)^2
+   $$
+
+   下一段文字
+   ```
+   缺空行时 GitHub 不会当成公式，而是原样显示 `$$ ... $$`；
+   `$$` 后面紧跟空行同样会断开（`$$` 自己变成一段）。
+2. **行内公式只能用 `$...$`**，不能用 `\( ... \)`；而且 `$` 不能紧贴汉字，
+   两侧要留空格（`代价 $J(w,b)$ 最小` 可以，`代价$J(w,b)$最小` 不行）。
+
+`tools/normalize_markdown_math.py` 会自动修这三类问题：补 `$$` 前后的空行、
+删掉 `$$` 后多余的空行、把 `\( ... \)` 转成 `$ ... $` 并补空格。
+如果公式块内部夹着空行（会把一个公式切成两段），脚本只报告不硬改，需要手工拆成两个公式块。
+
+注意：GitHub 不渲染 Obsidian 的 `==高亮==` 语法，会显示成字面的等号；
+需要高亮的话改用 `**加粗**` 或 `<mark>高亮</mark>`。

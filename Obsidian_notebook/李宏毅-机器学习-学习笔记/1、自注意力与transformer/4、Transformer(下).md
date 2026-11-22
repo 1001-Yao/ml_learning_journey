@@ -27,9 +27,11 @@ a1, a2, a3 就是编码器（Encoder）**最后一层**的输出向量序列
 （1）
 目的是让交叉熵最小，Cross Entropy 就是用来==计算模型预测结果和标准答案之间的差距==
 对于单个样本：
+
 $$
 CrossEntropy(p,q) = - \sum_{i}{p(i)\log q(i)}
 $$
+
 p(i)：真实分布（Ground Truth），也就是 独热向量（正确位置是 1，其余是 0）
 q(i)：模型预测的概率分布（Softmax 的输出）
 
