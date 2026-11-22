@@ -43,6 +43,10 @@ GLUE = re.compile(r"[0-9A-Za-z_\u4e00-\u9fff]")
 PAREN_MATH = re.compile(r"\\\((?P<body>.+?)\\\)")
 # 单行行内公式 $...$（不含 $$）
 INLINE_RE = re.compile(r"(?<![\\$])\$(?!\$)(?P<body>[^$\n]+?)\$(?!\$)")
+# 行内误用的 $$...$$（同一行里既有别的文字、又用 $$ 包了一个小公式）
+INLINE_DISPLAY = re.compile(r"\$\$(?P<body>[^$\n]+?)\$\$")
+# 斜体 *...* 里包着公式：GitHub 不渲染斜体内部的公式（加粗 **...** 不受影响）
+ITALIC_MATH = re.compile(r"(?<!\*)\*(?!\*)[^*\n]*\$[^$\n]+\$[^*\n]*(?<!\*)\*(?!\*)")
 
 
 def is_fence(line: str) -> bool:
@@ -161,12 +165,12 @@ def normalize_inline(line: str) -> tuple[str, int]:
         expr = f"${stripped}$"
         before = prefix[-1:] if prefix else ""
         after = line[m.end():m.end() + 1]
-        if before and GLUE.match(before):
+        # 实测：开头的 $ 前面只要是"非空白"（汉字、全角标点、字母、数字）就不渲染，
+        # 所以前面不是空白就补一个空格；结尾的 $ 后面贴汉字没有问题。
+        if before and not before.isspace():
             expr = " " + expr
         if after and GLUE.match(after):
             expr = expr + " "
-        if expr != m.group(0) or before or after:
-            pass
         out.append(prefix)
         out.append(expr)
         pos = m.end()
@@ -178,12 +182,12 @@ def normalize_inline(line: str) -> tuple[str, int]:
     return "".join(out), changed
 
 
-def convert_paren_math(lines: list[str], report: dict) -> list[str]:
+def convert_paren_math(lines: list[str], report: dict, md_name: str) -> list[str]:
     """把 \\( x \\) 改成 $x$，并整理行内公式（跳过代码块、行内代码和 $$ 公式体）。"""
     out: list[str] = []
     in_fence = False
     in_math = False
-    for line in lines:
+    for lineno, line in enumerate(lines, 1):
         if is_fence(line):
             in_fence = not in_fence
             out.append(line)
@@ -198,6 +202,12 @@ def convert_paren_math(lines: list[str], report: dict) -> list[str]:
         if in_math:
             out.append(line)
             continue
+
+        # 斜体 *...* 包住公式时 GitHub 不渲染（加粗 **...** 没问题），只报告
+        if ITALIC_MATH.search(line):
+            report["needs_manual"].append(
+                f"{md_name}:{lineno} 公式被 *斜体* 包住，GitHub 不渲染，需去掉斜体"
+            )
 
         # 按反引号切成 代码/非代码 交替段，只处理非代码段
         segments = line.split("`")
@@ -217,6 +227,18 @@ def convert_paren_math(lines: list[str], report: dict) -> list[str]:
                     return f"${body}$"
 
                 seg = PAREN_MATH.sub(repl, seg)
+
+            # 同一行里既有普通文字、又用 $$...$$ 包了个小公式：改成行内公式
+            if "$$" in seg and not re.fullmatch(r"\s*\$\$.*\$\$\s*", seg, re.S):
+
+                def collapse(m: re.Match) -> str:
+                    body = m.group("body").strip()
+                    if not body:
+                        return m.group(0)
+                    report["inline_display_fixed"] += 1
+                    return f"${body}$"
+
+                seg = INLINE_DISPLAY.sub(collapse, seg)
 
             seg, changed = normalize_inline(seg)
             report["inline_fixed"] += changed
@@ -245,6 +267,7 @@ def main(argv: list[str] | None = None) -> int:
         "blank_removed": 0,
         "paren_math": 0,
         "inline_fixed": 0,
+        "inline_display_fixed": 0,
         "touched": set(),
         "files_changed": 0,
         "needs_manual": [],
@@ -264,7 +287,7 @@ def main(argv: list[str] | None = None) -> int:
         report["touched"] = set()
 
         new_lines = fix_blocks(lines, report, md.name)
-        new_lines = convert_paren_math(new_lines, report)
+        new_lines = convert_paren_math(new_lines, report, md.name)
         new_text = "".join(new_lines)
 
         if new_text != text:
@@ -280,6 +303,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"补空行: {report['blank_added']} 行    删除多余空行: {report['blank_removed']} 行")
     print(f"改写 \\( ... \\) 行内公式: {report['paren_math']} 处")
     print(f"整理行内公式边界（去内侧空格/补外侧空格）: {report['inline_fixed']} 处")
+    print(f"行内误用 $$...$$ 改为行内公式: {report['inline_display_fixed']} 处")
     print(f"改动文件: {report['files_changed']} 篇")
     if report["needs_manual"]:
         print(f"\n[需人工处理] {len(report['needs_manual'])} 处：")
